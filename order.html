@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Form — TIMⵇA</title>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fcf9f4;
+      --panel: #ffffff;
+      --text: #1c1c19;
+      --muted: #54433e;
+      --accent: #86432b;
+      --accent-dark: #6b3321;
+      --border: #e9dace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; font-family:'Manrope',sans-serif; background: linear-gradient(135deg,#fcf9f4 0%,#f6f3ee 100%); color: var(--text); }
+    .layout { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1.25rem; }
+    .card { width:min(100%, 540px); background: var(--panel); border:1px solid var(--border); border-radius:1.25rem; box-shadow:0 18px 40px rgba(134,67,43,0.16); overflow:hidden; }
+    .card-header { background: radial-gradient(circle at top left, rgba(134,67,43,0.14), transparent 60%), #ffffff; padding:1.5rem 1.75rem; }
+    .card-header h1 { margin:0; font-size:1.45rem; font-weight:800; letter-spacing:0.04em; color:var(--accent); }
+    .card-header p { margin:0.5rem 0 0; color:var(--muted); font-size:0.9rem; }
+    .card-body { padding:1.5rem; display:grid; gap:0.9rem; }
+    label { display:flex; flex-direction:column; gap:0.35rem; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+    input, select { width:100%; border:1px solid var(--border); border-radius:0.85rem; padding:0.75rem 0.85rem; font-size:0.95rem; color:var(--text); background:#fff; outline:none; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(134,67,43,0.12); }
+    .row { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:0.85rem; }
+    .full { grid-column:1/-1; }
+    .info-box { font-size:0.85rem; color:var(--muted); border:1px dashed var(--border); border-radius:0.85rem; padding:0.8rem; background:#faf7f2; }
+    .cta { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:0.8rem; }
+    .cta button, .cta a { flex:1; padding:0.87rem 1rem; border-radius:0.85rem; border:none; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; cursor:pointer; transition: all 0.2s ease; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { background:var(--accent-dark); }
+    .btn-secondary { background:#f0ede8; color:var(--text); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+    .toast { position:fixed; left:50%; bottom:1.5rem; transform:translateX(-50%) translateY(110%); opacity:0; background:#1c1c19; color:#fff; border-radius:999px; padding:0.8rem 1.2rem; font-size:0.8rem; font-weight:700; letter-spacing:0.06em; transition:all 0.3s ease; z-index:500; }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    .footer { text-align:center; padding:0.85rem 0; font-size:0.78rem; color:var(--muted);}    
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="card">
+      <header class="card-header">
+        <h1>Secure Order Form</h1>
+        <p>Complete your purchase and we’ll start your artisanal distillation journey.</p>
+      </header>
+      <form id="orderForm" class="card-body">
+        <div class="row">
+          <label>First Name <input name="firstName" type="text" required placeholder="e.g. Amina" /></label>
+          <label>Last Name <input name="lastName" type="text" required placeholder="e.g. Berra" /></label>
+        </div>
+        <label class="full">Date of Birth <input name="dob" type="date" required /></label>
+        <label class="full">Gmail Address <input name="email" type="email" pattern="[a-z0-9._%+-]+@gmail\.com" required placeholder="you@gmail.com" /></label>
+        <label class="full">Phone Number <input name="phone" type="tel" required placeholder="+1 555 123 4567" /></label>
+        <label class="full">Product Type
+          <select name="productType" required>
+            <option value="">Choose product</option>
+            <option value="Seed Oil Distillate">Seed Oil Distillate</option>
+            <option value="Herbal Essence">Herbal Essence</option>
+            <option value="Custom Blend">Custom Blend</option>
+            <option value="Gift Set">Gift Set</option>
+          </select>
+        </label>
+        <div class="info-box" id="summaryBox">No items selected yet.</div>
+        <div class="cta">
+          <a href="index.html" class="btn-secondary">Modify Cart</a>
+          <button type="submit" class="btn-primary">Confirm Purchase</button>
+        </div>
+      </form>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite">Order confirmed!</div>
+  </main>
+  <footer class="footer">TIMⵇA — artisanal seed oil distillations</footer>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const items = params.get('items');
+    const total = params.get('total');
+    const sumBox = document.getElementById('summaryBox');
+
+    if (items || total) {
+      sumBox.textContent = `Order: ${items || '—'} | Total: $${total || '0.00'}`;
+    }
+
+    document.getElementById('orderForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      showToast('Order submitted — thank you for your purchase!');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1800);
+    });
+
+    function showToast(message) {
+      const t = document.getElementById('toast');
+      t.textContent = message;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+  </script>
+</body>
+</html>

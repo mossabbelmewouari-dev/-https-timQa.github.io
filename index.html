@@ -100,6 +100,40 @@ tailwind.config = {
   }
   .cart-overlay.open { opacity: 1; pointer-events: all; }
 
+  .order-overlay {
+    position: fixed; inset: 0;
+    background: rgba(28, 28, 25, 0.5);
+    backdrop-filter: blur(8px);
+    z-index: 310;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .order-overlay.open { opacity: 1; pointer-events: all; }
+
+  .order-form {
+    width: min(100%, 540px);
+    max-height: calc(100vh - 4rem);
+    overflow: auto;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 22px 60px rgba(28, 28, 25, 0.24);
+    border: 1px solid rgba(217,193,186,0.5);
+    padding: 1.25rem 1.35rem;
+    z-index: 320;
+  }
+  .order-form h2 { margin: 0 0 0.35rem; font-family:'Noto Serif',serif; color:#86432b; }
+  .order-form p { margin: 0 0 1rem; color:#54433e; font-size:0.9rem; }
+  .order-form label { display:block; font-size:0.75rem; color:#54433e; text-transform:uppercase; letter-spacing:0.08em; margin-top:0.75rem; }
+  .order-form input, .order-form select { width:100%; margin-top:0.35rem; padding:0.75rem 0.8rem; border-radius:0.65rem; border:1px solid rgba(217,193,186,0.8); font-size:0.92rem; color:#1c1c19; }
+  .order-form input:focus, .order-form select:focus { border-color:#86432b; outline:none; box-shadow:0 0 0 3px rgba(134, 67, 43, 0.12); }
+  .order-form .actions { display:flex; gap:0.7rem; margin-top:1rem; }
+  .order-form .actions button { flex:1; padding:0.85rem 1rem; border-radius:0.75rem; border:none; cursor:pointer; font-size:0.8rem; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; }
+  .order-form .btn-submit { background:#86432b; color:#fff; }
+  .order-form .btn-cancel { background:#f0ede8; color:#54433e; }
+  .order-form .order-summary { margin-top: 0.9rem; background:#f7f4ee; border:1px dashed #d9c1ba; padding:0.8rem; font-size:0.82rem; color:#54433e; border-radius:0.65rem; }
+
   /* Product modal */
   .modal-overlay {
     position: fixed; inset: 0;
@@ -243,8 +277,38 @@ tailwind.config = {
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     PRODUCT MODAL
+     ORDER FORM OVERLAY
 ═══════════════════════════════════════════════ -->
+<div class="order-overlay" id="orderOverlay" onclick="if(event.target===this) closeOrderForm()">
+  <div class="order-form">
+    <button onclick="closeOrderForm()" style="border:none;background:none;position:absolute;top:1rem;right:1rem;color:#86432b;font-size:1.1rem;cursor:pointer;">✕</button>
+    <h2>Complete Your Purchase</h2>
+    <p>Enter your information below to finalize the order.</p>
+    <form id="orderForm" onsubmit="submitOrderForm(event)">
+      <label>First Name<input type="text" name="firstName" required placeholder="Your first name" /></label>
+      <label>Last Name<input type="text" name="lastName" required placeholder="Your last name" /></label>
+      <label>Date of Birth<input type="date" name="dob" required /></label>
+      <label>Gmail Address<input type="email" name="email" required pattern="[a-z0-9._%+-]+@gmail\.com" placeholder="you@gmail.com" /></label>
+      <label>Phone Number<input type="tel" name="phone" required placeholder="+1 555 123 4567" /></label>
+      <label>Type of Product<select name="productType" required>
+        <option value="">Choose a product type</option>
+        <option value="Seed Oil Distillate">Seed Oil Distillate</option>
+        <option value="Herbal Essence">Herbal Essence</option>
+        <option value="Custom Blend">Custom Blend</option>
+        <option value="Gift Set">Gift Set</option>
+      </select></label>
+      <div class="order-summary" id="orderSummary">No products selected</div>
+      <div class="actions">
+        <button type="button" class="btn-cancel" onclick="closeOrderForm()">Cancel</button>
+        <button type="submit" class="btn-submit">Submit Order</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PRODUCT MODAL
+═══════════════════════════════════════ -->
 <div class="modal-overlay" id="productModal" onclick="closeModal(event)">
   <div class="modal-box" id="modalBox">
     <!-- filled by JS -->
@@ -309,7 +373,7 @@ tailwind.config = {
 
   <!-- Content -->
   <div style="position:relative;z-index:10;text-align:center;padding:0 1.5rem;max-width:1000px;" class="fade-up">
-    <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5em;color:rgba(255,219,208,0.8);display:block;margin-bottom:2rem;" class="fade-up delay-1">Distilled in the Heart of Morocco · Est. 1987</span>
+    <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.5em;color:rgba(255,219,208,0.8);display:block;margin-bottom:2rem;" class="fade-up delay-1">Distilled in the Heart of Morocco</span>
     <h1 style="font-family:'Noto Serif',serif;font-size:clamp(3rem,8vw,7rem);color:#fff;line-height:0.92;letter-spacing:-0.02em;margin-bottom:1.5rem;" class="fade-up delay-2">
       Pressed from<br/>
       <em style="color:#fed488;font-style:italic;">Ancient Seeds,</em><br/>
@@ -1105,11 +1169,15 @@ function openModal(id) {
             ${p.weight.map((w, i) => `<button onclick="selectWeight(this)" data-weight="${w}" style="padding:0.5rem 1.25rem;border-radius:2rem;font-size:0.75rem;font-weight:600;border:1px solid ${i===0 ? '#86432b' : 'rgba(217,193,186,0.5)'};background:${i===0 ? '#86432b' : 'transparent'};color:${i===0 ? '#fff' : '#54433e'};cursor:pointer;transition:all 0.2s;">${w}</button>`).join('')}
           </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;gap:0.75rem;">
           <span style="font-family:'Noto Serif',serif;font-size:2rem;color:#86432b;">$${p.price.toFixed(2)}</span>
-          <button onclick="addToCart(${id}, document.querySelector('#weightSelector button[style*=\"86432b\"]')?.dataset?.weight || '${p.weight[0]}');closeModal();" style="background:#86432b;color:#fff;padding:0.875rem 2rem;border-radius:3rem;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;border:none;cursor:pointer;display:flex;align-items:center;gap:0.5rem;transition:all 0.3s;" onmouseover="this.style.background='#6b3321'" onmouseout="this.style.background='#86432b'">
+          <button onclick="addToCart(${id}, document.querySelector('#weightSelector button[style*=\"86432b\"]')?.dataset?.weight || '${p.weight[0]}');closeModal();" style="background:#86432b;color:#fff;padding:0.875rem 1rem;border-radius:3rem;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;border:none;cursor:pointer;display:flex;align-items:center;gap:0.5rem;transition:all 0.3s;" onmouseover="this.style.background='#6b3321'" onmouseout="this.style.background='#86432b'">
             <span class="material-symbols-outlined" style="font-size:16px;">add_shopping_cart</span>
             Add to Collection
+          </button>
+          <button onclick="buyNow(${id}, document.querySelector('#weightSelector button[style*=\"86432b\"]')?.dataset?.weight || '${p.weight[0]}');" style="background:#775a19;color:#fff;padding:0.875rem 1rem;border-radius:3rem;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;border:none;cursor:pointer;display:flex;align-items:center;gap:0.5rem;transition:all 0.3s;" onmouseover="this.style.background='#5d4814'" onmouseout="this.style.background='#775a19'">
+            <span class="material-symbols-outlined" style="font-size:16px;">local_shipping</span>
+            Buy Now
           </button>
         </div>
       </div>
@@ -1133,6 +1201,21 @@ function closeModal(e) {
   if (!e || e.target === document.getElementById('productModal')) {
     document.getElementById('productModal').classList.remove('open');
   }
+}
+
+function buyNow(productId, weight) {
+  const p = products[productId];
+  const w = weight || p.weight[0];
+  const existing = cart.find(i => i.id === productId && i.weight === w);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ id: productId, name: p.name, price: p.price, weight: w, qty: 1 });
+  }
+  updateCartUI();
+  showToast(`${p.name} added to cart. Starting checkout...`);
+  closeModal();
+  openOrderForm(cart.map(i => `${i.qty}× ${i.name}`).join(', '), cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2));
 }
 
 // Mobile menu
@@ -1180,9 +1263,58 @@ function handleNewsletter(e) {
 
 // Checkout placeholder
 function checkout() {
-  if (cart.length === 0) return;
-  showToast('Redirecting to secure checkout…');
-  setTimeout(() => { closeCart(); }, 1200);
+  let productNames = 'No products added yet';
+  let total = '0.00';
+
+  if (cart.length > 0) {
+    productNames = cart.map(i => `${i.qty}× ${i.name}`).join(', ');
+    total = cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
+  }
+
+  if (cart.length === 0) {
+    showToast('Your collection is empty, but you can still fill the order form.');
+  }
+
+  openOrderForm(productNames, total);
+}
+
+function openOrderForm(productList, total) {
+  const overlay = document.getElementById('orderOverlay');
+  const summary = document.getElementById('orderSummary');
+  const form = document.getElementById('orderForm');
+  
+  if (!overlay) {
+    console.error('orderOverlay not found in DOM');
+    alert('Overlay element missing. Please refresh the page.');
+    return;
+  }
+  
+  overlay.classList.add('open');
+  if (summary) summary.textContent = `Items: ${productList} | Total: $${total}`;
+  if (form) {
+    form.dataset.productList = productList;
+    form.dataset.total = total;
+  }
+  console.log('Order form opened');
+}
+
+function closeOrderForm() {
+  document.getElementById('orderOverlay').classList.remove('open');
+}
+
+function submitOrderForm(event) {
+  event.preventDefault();
+  const form = event.target;
+  const values = new FormData(form);
+  const email = values.get('email');
+  if (!email || !email.match(/[a-z0-9._%+-]+@gmail\.com/i)) {
+    showToast('Please enter a valid Gmail address.');
+    return;
+  }
+  showToast('Order submitted — thank you!');
+  cart = [];
+  updateCartUI();
+  setTimeout(() => { closeOrderForm(); }, 1200);
 }
 
 // Scroll reveal
